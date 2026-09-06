@@ -1,4 +1,4 @@
-# Hermes WeChat
+# Signal Vaults
 
 **微信群 / 公众号 AI 知识日报** — 本地解密微信数据库 → LLM 提炼知识 → Discord/终端输出。
 
