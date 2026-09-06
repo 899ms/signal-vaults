@@ -83,7 +83,11 @@ signal-vaults groups
 signal-vaults groups 关键词
 signal-vaults daily 2 "已确认的群名"
 signal-vaults mp 3
+signal-vaults hn 1                             # Hacker News 日报
+signal-vaults reddit 1 LocalLLaMA programming  # Reddit 日报
 ```
+
+外部信息源说明：`hn` 免费；`reddit` 走 Atom RSS，国内需代理（REDDIT_PROXY/PUSH_PROXY）。飞书推送：用户在 `.env` 配置 `FEISHU_WEBHOOK_URL`（群机器人 Webhook）后与 Discord 同时启用；获取方式见 README。
 
 `mp` 没有文章时输出"无文章"是正常结果。
 

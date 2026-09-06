@@ -317,6 +317,8 @@ def run_groups(group_keywords, days=1):
                                     "know_{}.txt".format(_chat_key(username)))
             open(txt_path, "w", encoding="utf-8").write(txt)
             st = push_discord(d, txt_path)
+            from . import feishu
+            fs = feishu.push_feishu(d, txt_path)
             u_in = sum(u["in"] for u in llm.LLM_USAGE)
             u_out = sum(u["out"] for u in llm.LLM_USAGE)
             print("  -> Discord HTTP {} ({}条, 知识{}条, 链接{}条) [tokens in={} out={}]".format(
@@ -417,4 +419,6 @@ def run_mp(days=3, ghs=None):
     txt_path = os.path.join(config.WORK_DIR, "know_gongzhonghao.txt")
     open(txt_path, "w", encoding="utf-8").write(txt)
     st = push_discord(digest, txt_path)
+    from . import feishu
+    feishu.push_feishu(digest, txt_path)
     print("-> Discord HTTP {} ({}篇, 精选{}条)".format(st, len(all_arts), len(hot)), flush=True)

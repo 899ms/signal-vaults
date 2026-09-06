@@ -90,6 +90,17 @@ def main(argv=None):
         daily.run_mp(days)
         return 0
 
+    if cmd in ("hn", "hacker-news", "hackernews", "reddit"):
+        from . import external
+        days = int(argv[1]) if len(argv) > 1 and argv[1].isdigit() else 1
+        subs = None
+        if cmd == "reddit":
+            rest = [a for a in argv[1:] if not a.isdigit()]
+            if rest:
+                subs = [s.lstrip("r/") for s in rest]
+        return external.run_source(
+            "hn" if cmd != "reddit" else "reddit", days, subs=subs)
+
     print(__doc__)
     return 1
 

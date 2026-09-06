@@ -16,6 +16,8 @@
 | `signal-vaults groups [关键词]` | 列出群与会话（供 Agent 选择目标群） |
 | `signal-vaults daily [days] [群...]` | 群聊知识日报：分片 LLM 提炼 → 知识点 + 术语科普 + 资源链接，带缓存与重试 |
 | `signal-vaults mp [days]` | 公众号文章日报：抓取推送 → LLM 写推荐语 → 输出 |
+| `signal-vaults hn [days]` | Hacker News 日报：官方 API 拉取 → LLM 精选 → 推送（免费，无需 key） |
+| `signal-vaults reddit [days] [r/子版块...]` | Reddit 日报：Atom RSS 拉取 → LLM 精选 → 推送（需 REDDIT_PROXY/PUSH_PROXY） |
 
 输出默认写到 `work/know_*.txt`；配置了 Discord 环境变量则同时推送（含图片附件与 embed 卡片）。
 
@@ -41,6 +43,8 @@ export LLM_MODEL=glm-4-flash
 signal-vaults doctor
 signal-vaults daily 1 "Agentic" "Data Go"     # 群名支持模糊匹配，先 signal-vaults groups 看列表
 signal-vaults mp 3                            # 公众号日报
+signal-vaults hn 1                            # Hacker News 日报
+signal-vaults reddit 1 LocalLLaMA programming # Reddit 日报（指定子版块）
 ```
 
 ## 环境变量
@@ -56,6 +60,8 @@ signal-vaults mp 3                            # 公众号日报
 | `SIGNAL_VAULTS_WORK_DIR` | | 工作目录（默认 `./work`） |
 | `DISCORD_BOT_TOKEN` / `DISCORD_CHANNEL_ID` | | 配置后自动推送 Discord |
 | `PUSH_PROXY` | | Discord 推送代理（默认跟随 `LLM_PROXY`） |
+| `FEISHU_WEBHOOK_URL` / `FEISHU_WEBHOOK_SECRET` | | 配置后自动推送飞书群（群机器人 Webhook，与 Discord 可并存） |
+| `REDDIT_PROXY` | | Reddit 拉取代理（缺省回落 `PUSH_PROXY`） |
 
 > 📷 从零配置 Discord Bot（拿 Token、开 Intent、邀请进服、拿频道 ID）：见 **[docs/discord-setup.md](docs/discord-setup.md)** 手把手图文教程。
 

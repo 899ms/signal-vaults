@@ -1,0 +1,70 @@
+"""外部信息源日报（Hacker News / Reddit）→ 同一套 LLM 提炼/渲染/推送管线。"""
+import os
+import time
+
+from . import config, llm, daily
+from .sources import HackerNewsSource, RedditSource
+
+
+def _digest_for_source(source_name, items, days):
+    """把 Item 列表走 LLM 精选, 复用微信管线的 merge/render。
+
+    Item: {title, url, summary, meta}
+    """
+    import json
+    from .sources import fmt_items
+    prompt = (
+        "你是AI前沿知识筛选员。以下是 {src} 近{days}天的条目列表(标题|链接|热度|摘要)。"
+        "只保留AI/LLM/Agent/编程/技术相关且有信息量的条目, 每条给1-2句中文摘要(是什么/为什么值得看)。"
+        "【链接铁律】url 必须逐字复制原文条目里的链接, 严禁构造。"
+        "只输出JSON: {{\"knowledge\":[{{\"topic\":\"条目标题\",\"detail\":\"1-2句摘要\",\"who\":\"{src}\"}}],"
+        "\"resources\":[{{\"title\":\"条目标题\",\"url\":\"原文链接\"}}]}}".format(
+            src=source_name, days=days))
+    text = fmt_items(items, source_name)
+    raw = llm.chat(text[:16000], system=prompt)
+    from .daily import _parse_llm_json
+    data = _parse_llm_json(raw)
+    raw_urls = {it["url"] for it in items if it.get("url")}
+    hot, res = [], []
+    for k in data.get("knowledge", []):
+        hot.append({"topic": k.get("topic", ""), "detail": k.get("detail", ""),
+                    "who": k.get("who", source_name)})
+    for r in data.get("resources", []):
+        u = (r.get("url") or "").strip()
+        if u and not any(u == ru or u in ru or ru in u for ru in raw_urls):
+            print("    [链接校验] 丢弃非来源 URL: {}".format(u[:60]))
+            r = dict(r)
+            r.pop("url", None)
+        res.append(r)
+    return {"hot": hot, "resources": res,
+            "meta": {"chat": source_name, "days": days, "total": len(items),
+                     "days_label": "近{}天".format(days),
+                     "raw_chat": None, "thumbs": [], "files": []}}
+
+
+def run_source(source="hn", days=1, subs=None, limit=40):
+    """signal-vaults hn / reddit 子命令入口。"""
+    if source in ("hn", "hacker-news", "hackernews"):
+        src, name = HackerNewsSource(limit=limit), "Hacker News"
+    elif source == "reddit":
+        kwargs = {"subs": subs} if subs else {}
+        src, name = RedditSource(**kwargs), "Reddit"
+    else:
+        raise ValueError("未知信息源: {}".format(source))
+    print("=== {} 条目采集 (近{}天) ===".format(name, days), flush=True)
+    items = src.fetch(days)
+    print("  拉取 {} 条".format(len(items)), flush=True)
+    if not items:
+        print("  无条目")
+        return 0
+    d = _digest_for_source(name, items, days)
+    txt = daily.render_text(d)
+    fname = "know_{}.txt".format(source.lower().replace("-", ""))
+    txt_path = os.path.join(config.WORK_DIR, fname)
+    open(txt_path, "w", encoding="utf-8").write(txt)
+    print("  已写 {}".format(txt_path), flush=True)
+    st = daily.push_discord(d, txt_path)
+    from . import feishu
+    feishu.push_feishu(d, txt_path)
+    print("-> Discord HTTP {} ({}条精选)".format(st, len(d["hot"])), flush=True)
+    return 0
