@@ -90,6 +90,10 @@ def main(argv=None):
         daily.run_mp(days)
         return 0
 
+    if cmd == "feishu":
+        from . import feishu
+        return feishu.start_ws()
+
     if cmd in ("hn", "hacker-news", "hackernews", "reddit"):
         from . import external
         days = int(argv[1]) if len(argv) > 1 and argv[1].isdigit() else 1

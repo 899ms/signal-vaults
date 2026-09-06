@@ -45,6 +45,7 @@ signal-vaults daily 1 "Agentic" "Data Go"     # 群名支持模糊匹配，先 s
 signal-vaults mp 3                            # 公众号日报
 signal-vaults hn 1                            # Hacker News 日报
 signal-vaults reddit 1 LocalLLaMA programming # Reddit 日报（指定子版块）
+signal-vaults feishu                          # 飞书 Bot 守护（WS 长连接，群里发"日报"触发）
 ```
 
 ## 环境变量
@@ -60,7 +61,9 @@ signal-vaults reddit 1 LocalLLaMA programming # Reddit 日报（指定子版块�
 | `SIGNAL_VAULTS_WORK_DIR` | | 工作目录（默认 `./work`） |
 | `DISCORD_BOT_TOKEN` / `DISCORD_CHANNEL_ID` | | 配置后自动推送 Discord |
 | `PUSH_PROXY` | | Discord 推送代理（默认跟随 `LLM_PROXY`） |
-| `FEISHU_WEBHOOK_URL` / `FEISHU_WEBHOOK_SECRET` | | 配置后自动推送飞书群（群机器人 Webhook，与 Discord 可并存） |
+| `FEISHU_APP_ID` / `FEISHU_APP_SECRET` | | 配置后启用飞书 Bot（WebSocket 长连接，可双向交互，与 Discord 可并存） |
+| `FEISHU_TARGET_CHAT` | | 指定接收日报的飞书群 chat_id（可选） |
+| `SIG_VAULTS_TOPIC` / `SIG_VAULTS_STYLE` | | 日报主题聚焦与摘要风格定制（对所有信息源生效） |
 | `REDDIT_PROXY` | | Reddit 拉取代理（缺省回落 `PUSH_PROXY`） |
 
 > 📷 从零配置 Discord Bot（拿 Token、开 Intent、邀请进服、拿频道 ID）：见 **[docs/discord-setup.md](docs/discord-setup.md)** 手把手图文教程。

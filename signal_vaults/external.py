@@ -51,27 +51,33 @@ def _digest_for_source(source_name, items, days):
                      "raw_chat": None, "thumbs": [], "files": []}}
 
 
-def run_source(source="hn", days=1, subs=None, limit=40):
-    """signal-vaults hn / reddit 子命令入口。"""
+def build_source_digest(source="hn", days=1, subs=None, limit=40):
+    """拉取+提炼, 返回 (digest, txt_path); 不推送 — 供 CLI 和飞书 WS 复用"""
     if source in ("hn", "hacker-news", "hackernews"):
-        src, name = HackerNewsSource(limit=limit), "Hacker News"
+        src, name, fname = HackerNewsSource(limit=limit), "Hacker News", "hn"
     elif source == "reddit":
         kwargs = {"subs": subs} if subs else {}
-        src, name = RedditSource(**kwargs), "Reddit"
+        src, name, fname = RedditSource(**kwargs), "Reddit", "reddit"
     else:
         raise ValueError("未知信息源: {}".format(source))
     print("=== {} 条目采集 (近{}天) ===".format(name, days), flush=True)
     items = src.fetch(days)
     print("  拉取 {} 条".format(len(items)), flush=True)
     if not items:
+        return None, None
+    d = _digest_for_source(name, items, days)
+    txt_path = os.path.join(config.WORK_DIR, "know_{}.txt".format(fname))
+    open(txt_path, "w", encoding="utf-8").write(daily.render_text(d))
+    print("  已写 {}".format(txt_path), flush=True)
+    return d, txt_path
+
+
+def run_source(source="hn", days=1, subs=None, limit=40):
+    """signal-vaults hn / reddit 子命令入口。"""
+    d, txt_path = build_source_digest(source, days, subs, limit)
+    if d is None:
         print("  无条目")
         return 0
-    d = _digest_for_source(name, items, days)
-    txt = daily.render_text(d)
-    fname = "know_{}.txt".format(source.lower().replace("-", ""))
-    txt_path = os.path.join(config.WORK_DIR, fname)
-    open(txt_path, "w", encoding="utf-8").write(txt)
-    print("  已写 {}".format(txt_path), flush=True)
     st = daily.push_discord(d, txt_path)
     from . import feishu
     feishu.push_feishu(d, txt_path)
