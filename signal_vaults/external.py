@@ -11,15 +11,24 @@ def _digest_for_source(source_name, items, days):
 
     Item: {title, url, summary, meta}
     """
-    import json
+    import json, os
     from .sources import fmt_items
+    # 主题/风格: SIG_VAULTS_TOPIC 追加关注主题; SIG_VAULTS_STYLE 追加摘要风格
+    topic = os.environ.get("SIG_VAULTS_TOPIC", "").strip()
+    style = os.environ.get("SIG_VAULTS_STYLE", "").strip()
+    extra = ""
+    if topic:
+        extra += "【主题聚焦】优先保留与以下主题相关的条目, 无关的丢弃: {}。".format(topic)
+    if style:
+        extra += "【摘要风格】{}".format(style)
     prompt = (
         "你是AI前沿知识筛选员。以下是 {src} 近{days}天的条目列表(标题|链接|热度|摘要)。"
         "只保留AI/LLM/Agent/编程/技术相关且有信息量的条目, 每条给1-2句中文摘要(是什么/为什么值得看)。"
+        "{extra}"
         "【链接铁律】url 必须逐字复制原文条目里的链接, 严禁构造。"
         "只输出JSON: {{\"knowledge\":[{{\"topic\":\"条目标题\",\"detail\":\"1-2句摘要\",\"who\":\"{src}\"}}],"
         "\"resources\":[{{\"title\":\"条目标题\",\"url\":\"原文链接\"}}]}}".format(
-            src=source_name, days=days))
+            src=source_name, days=days, extra=extra))
     text = fmt_items(items, source_name)
     raw = llm.chat(text[:16000], system=prompt)
     from .daily import _parse_llm_json
